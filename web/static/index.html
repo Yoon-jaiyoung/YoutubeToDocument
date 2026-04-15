@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YoutubeToDocument</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #21262d;
+  --border:   #30363d;
+  --text:     #c9d1d9;
+  --muted:    #8b949e;
+  --accent:   #58a6ff;
+  --green:    #3fb950;
+  --yellow:   #d29922;
+  --red:      #f85149;
+  --purple:   #bc8cff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; }
+
+/* Header */
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+header h1 { font-size: 16px; font-weight: 600; color: var(--accent); }
+header span { color: var(--muted); font-size: 13px; }
+
+/* Layout */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 12px 0; flex-shrink: 0; }
+.sidebar-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 8px 16px 6px; }
+.tool-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; font-size: 13px; }
+.tool-item:hover { background: var(--surface2); }
+.tool-item.active { border-left-color: var(--accent); background: var(--surface2); color: var(--accent); }
+.tool-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.top-pane { display: flex; flex: 1; overflow: hidden; }
+
+/* Form Panel */
+.form-panel { width: 340px; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+.panel-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+.panel-header h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.panel-header p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.form-body { padding: 16px 20px; flex: 1; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+.field label .req { color: var(--red); margin-left: 2px; }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; color: var(--text); font-size: 13px; outline: none; transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+.field select option { background: var(--surface2); }
+.btn-run {
+  width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; margin-top: 4px;
+}
+.btn-run:hover { opacity: .85; }
+.btn-run:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Result Panel */
+.result-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; background: var(--surface); }
+.tab { padding: 10px 14px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); transition: all .15s; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; flex: 1; overflow: hidden; }
+.tab-content.active { display: flex; flex-direction: column; flex: 1; }
+
+/* Log */
+#log-content {
+  flex: 1; overflow-y: auto; padding: 14px 16px; font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px; line-height: 1.7; background: var(--bg);
+}
+.log-line { color: var(--text); }
+.log-line.log-step { color: var(--accent); font-weight: 600; }
+.log-line.log-ok   { color: var(--green); }
+.log-line.log-err  { color: var(--red); }
+.log-line.log-info { color: var(--muted); }
+
+/* Markdown result */
+#result-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+#result-content .markdown-body { max-width: 860px; }
+#result-content .markdown-body h1 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; }
+#result-content .markdown-body h2 { font-size: 18px; margin: 24px 0 10px; color: var(--accent); }
+#result-content .markdown-body h3 { font-size: 15px; margin: 18px 0 8px; color: var(--purple); }
+#result-content .markdown-body p  { line-height: 1.75; margin-bottom: 12px; }
+#result-content .markdown-body code { background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'SF Mono','Fira Code',monospace; }
+#result-content .markdown-body pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; overflow-x: auto; margin: 12px 0; }
+#result-content .markdown-body pre code { background: none; padding: 0; }
+#result-content .markdown-body table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+#result-content .markdown-body th, #result-content .markdown-body td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+#result-content .markdown-body th { background: var(--surface2); font-weight: 600; color: var(--accent); }
+#result-content .markdown-body blockquote { border-left: 3px solid var(--accent); margin: 12px 0; padding: 8px 14px; color: var(--muted); background: var(--surface); border-radius: 0 6px 6px 0; }
+#result-content .markdown-body ul, #result-content .markdown-body ol { padding-left: 22px; margin: 8px 0; }
+#result-content .markdown-body li { margin-bottom: 4px; line-height: 1.6; }
+#result-content .markdown-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* Stats result */
+#stats-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; }
+.stat-card h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: var(--accent); }
+.stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.history-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+.history-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.history-item .meta { font-size: 11px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-blue   { background: rgba(88,166,255,.15); color: var(--accent); }
+.badge-green  { background: rgba(63,185,80,.15); color: var(--green); }
+
+/* Usage table */
+.usage-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.usage-table th, .usage-table td { padding: 8px 12px; border: 1px solid var(--border); text-align: left; }
+.usage-table th { background: var(--surface2); color: var(--accent); font-weight: 600; }
+.usage-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+/* Status bar */
+.status-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 6px 16px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.status-dot.running { background: var(--yellow); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Placeholder */
+.placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 12px; }
+.placeholder .icon { font-size: 48px; opacity: .3; }
+.placeholder p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:20px">🎬</span>
+  <h1>YoutubeToDocument</h1>
+  <span>YouTube 기술 영상 → 기술 매뉴얼 생성기</span>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-title">MCP 도구</div>
+    <div id="tool-list"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="top-pane">
+      <!-- Form Panel -->
+      <div class="form-panel">
+        <div class="panel-header">
+          <h2 id="tool-title">도구를 선택하세요</h2>
+          <p id="tool-desc" style="color:var(--muted);font-size:12px">왼쪽에서 실행할 MCP 도구를 선택하세요.</p>
+        </div>
+        <div class="form-body">
+          <div id="form-fields"></div>
+          <button class="btn-run" id="btn-run" disabled onclick="runTool()">▶ 실행</button>
+        </div>
+      </div>
+
+      <!-- Result Panel -->
+      <div class="result-panel">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('log')">로그</div>
+          <div class="tab" onclick="switchTab('result')">결과</div>
+          <div class="tab" onclick="switchTab('stats')">데이터</div>
+        </div>
+
+        <div id="tab-log" class="tab-content active">
+          <div id="log-content"><span style="color:var(--muted);font-size:12px">도구를 실행하면 진행 로그가 표시됩니다.</span></div>
+        </div>
+
+        <div id="tab-result" class="tab-content">
+          <div id="result-content">
+            <div class="placeholder"><div class="icon">📄</div><p>실행 결과가 여기에 표시됩니다.</p></div>
+          </div>
+        </div>
+
+        <div id="tab-stats" class="tab-content">
+          <div id="stats-content">
+            <div class="placeholder"><div class="icon">📊</div><p>이력/통계 데이터가 여기에 표시됩니다.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">대기 중</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let tools = [];
+let currentTool = null;
+let outputs = [];
+
+// ── 초기화 ──────────────────────────────────────────────────────────
+async function init() {
+  const [t, o] = await Promise.all([
+    fetch('/api/tools').then(r => r.json()),
+    fetch('/api/outputs').then(r => r.json()),
+  ]);
+  tools = t;
+  outputs = o;
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const list = document.getElementById('tool-list');
+  list.innerHTML = tools.map(t => `
+    <div class="tool-item" data-name="${t.name}" onclick="selectTool('${t.name}')">
+      <span class="tool-icon">${t.icon}</span>
+      <span>${t.label}</span>
+    </div>
+  `).join('');
+}
+
+// ── 도구 선택 ────────────────────────────────────────────────────────
+function selectTool(name) {
+  currentTool = tools.find(t => t.name === name);
+  document.querySelectorAll('.tool-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.name === name);
+  });
+  document.getElementById('tool-title').textContent = `${currentTool.icon} ${currentTool.label}`;
+  document.getElementById('tool-desc').textContent = currentTool.description;
+  document.getElementById('btn-run').disabled = false;
+  renderForm(currentTool.fields);
+}
+
+function renderForm(fields) {
+  const container = document.getElementById('form-fields');
+  if (!fields.length) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:12px;margin-bottom:14px">추가 입력 없이 바로 실행됩니다.</p>';
+    return;
+  }
+  container.innerHTML = fields.map(f => {
+    const req = f.required ? '<span class="req">*</span>' : '';
+    if (f.type === 'select') {
+      const opts = f.options.map(o => `<option value="${o}" ${o===f.default?'selected':''}>${o}</option>`).join('');
+      return `<div class="field"><label>${f.label}${req}</label><select id="field-${f.key}">${opts}</select></div>`;
+    }
+    if (f.type === 'output_select') {
+      const opts = outputs.map(o => `<option value="${o.dir}">${o.name}</option>`).join('');
+      return `<div class="field"><label>${f.label}${req}</label><select id="field-${f.key}"><option value="">-- 선택 --</option>${opts}</select></div>`;
+    }
+    if (f.type === 'textarea') {
+      return `<div class="field"><label>${f.label}${req}</label><textarea id="field-${f.key}" placeholder="${f.placeholder||''}"></textarea></div>`;
+    }
+    return `<div class="field"><label>${f.label}${req}</label><input id="field-${f.key}" type="text" placeholder="${f.placeholder||''}"></div>`;
+  }).join('');
+}
+
+// ── 실행 ────────────────────────────────────────────────────────────
+async function runTool() {
+  if (!currentTool) return;
+
+  // 필드 수집
+  const args = {};
+  for (const f of currentTool.fields) {
+    const el = document.getElementById(`field-${f.key}`);
+    if (el) args[f.key] = el.value.trim();
+  }
+
+  // 필수 검사
+  for (const f of currentTool.fields) {
+    if (f.required && !args[f.key]) {
+      alert(`${f.label}을(를) 입력하세요.`);
+      return;
+    }
+  }
+
+  // UI 초기화
+  clearLog();
+  clearResult();
+  setStatus('running', '실행 중...');
+  document.getElementById('btn-run').disabled = true;
+  switchTab('log');
+
+  // 태스크 시작
+  const res = await fetch(`/api/execute/${currentTool.name}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({args}),
+  });
+  const {task_id} = await res.json();
+
+  // SSE 스트림 구독
+  const es = new EventSource(`/api/stream/${task_id}`);
+  es.onmessage = (e) => {
+    const item = JSON.parse(e.data);
+    if (item.type === 'log') {
+      appendLog(item.text);
+    } else if (item.type === 'result') {
+      renderResult(item.data);
+      setStatus('idle', '완료');
+      document.getElementById('btn-run').disabled = false;
+      // 출력 목록 갱신
+      fetch('/api/outputs').then(r=>r.json()).then(o=>{outputs=o;});
+    } else if (item.type === 'error') {
+      appendLog(`❌ 오류: ${item.message}`, 'log-err');
+      setStatus('idle', `오류: ${item.message}`);
+      document.getElementById('btn-run').disabled = false;
+    } else if (item.type === 'done') {
+      es.close();
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    setStatus('idle', '연결 종료');
+    document.getElementById('btn-run').disabled = false;
+  };
+}
+
+// ── 로그 ────────────────────────────────────────────────────────────
+function clearLog() {
+  document.getElementById('log-content').innerHTML = '';
+}
+function appendLog(text, cls='log-line') {
+  const c = document.getElementById('log-content');
+  let lineClass = cls;
+  if (text.startsWith('[') && text.includes('/')) lineClass = 'log-line log-step';
+  else if (text.includes('✅')) lineClass = 'log-line log-ok';
+  else if (text.includes('❌')) lineClass = 'log-line log-err';
+  else if (text.startsWith('  ')) lineClass = 'log-line log-info';
+  const div = document.createElement('div');
+  div.className = lineClass;
+  div.textContent = text;
+  c.appendChild(div);
+  c.scrollTop = c.scrollHeight;
+}
+
+// ── 결과 렌더링 ──────────────────────────────────────────────────────
+function clearResult() {
+  document.getElementById('result-content').innerHTML =
+    '<div class="placeholder"><div class="icon">⏳</div><p>처리 중...</p></div>';
+  document.getElementById('stats-content').innerHTML =
+    '<div class="placeholder"><div class="icon">⏳</div><p>처리 중...</p></div>';
+}
+
+function renderResult(data) {
+  if (!data) return;
+
+  if (data.type === 'manual' && data.content) {
+    // 마크다운 렌더링
+    const html = marked.parse(data.content);
+    document.getElementById('result-content').innerHTML =
+      `<div class="markdown-body">${html}</div>`;
+
+    // 사용량 테이블
+    let usageHtml = '';
+    if (data.usage_steps) {
+      const rows = data.usage_steps.map(s =>
+        `<tr><td>${s.step}</td><td>${s.model}</td><td>${s.prompt_tokens.toLocaleString()}</td><td>${s.completion_tokens.toLocaleString()}</td><td><strong>${s.total_tokens.toLocaleString()}</strong></td></tr>`
+      ).join('');
+      usageHtml = `
+        <div class="stat-card">
+          <h3>AI 사용량</h3>
+          <table class="usage-table">
+            <thead><tr><th>단계</th><th>모델</th><th>입력</th><th>출력</th><th>합계</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+            총 ${data.total_tokens?.toLocaleString()} 토큰
+            ${data.estimated_cost > 0 ? ` · 예상 비용 $${data.estimated_cost.toFixed(4)}` : ' · 무료 (로컬)'}
+          </div>
+        </div>`;
+    }
+    document.getElementById('stats-content').innerHTML = `
+      <div class="stat-card"><h3>영상 제목</h3><div class="value" style="font-size:16px">${data.title||''}</div></div>
+      <div class="stat-card"><h3>기술명</h3><div class="value" style="font-size:18px">${data.tech_name||''}</div></div>
+      <div class="stat-card"><h3>출력 경로</h3><div class="value" style="font-size:12px;word-break:break-all">${data.final_path||data.path||''}</div></div>
+      ${usageHtml}
+    `;
+    switchTab('result');
+
+  } else if (data.type === 'history') {
+    const items = data.items || [];
+    if (!items.length) {
+      document.getElementById('stats-content').innerHTML =
+        '<div class="placeholder"><div class="icon">📋</div><p>이력이 없습니다.</p></div>';
+    } else {
+      document.getElementById('stats-content').innerHTML = items.slice().reverse().map(h => `
+        <div class="history-item">
+          <h4>${h.title}</h4>
+          <div class="meta">
+            <span>📅 ${h.created_at?.slice(0,10)}</span>
+            <span class="badge badge-blue">${h.model}</span>
+            ${h.usage ? `<span class="badge badge-green">${h.usage.total_tokens?.toLocaleString()} 토큰</span>` : ''}
+            ${h.notion_url ? `<a href="${h.notion_url}" target="_blank" style="color:var(--accent)">Notion ↗</a>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('result-content').innerHTML =
+      '<div class="placeholder"><div class="icon">📋</div><p>왼쪽 데이터 탭을 확인하세요.</p></div>';
+    switchTab('stats');
+
+  } else if (data.type === 'usage_stats') {
+    const models = Object.entries(data.model_stats || {});
+    const modelRows = models.map(([m, s]) =>
+      `<tr><td>${m}</td><td>${s.count}</td><td>${s.tokens.toLocaleString()}</td><td>${s.cost > 0 ? '$'+s.cost.toFixed(4) : '무료'}</td></tr>`
+    ).join('');
+    document.getElementById('stats-content').innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><h3>처리 영상</h3><div class="value">${data.entries}</div></div>
+        <div class="stat-card"><h3>총 토큰</h3><div class="value">${data.total_tokens?.toLocaleString()}</div></div>
+        <div class="stat-card"><h3>예상 비용</h3><div class="value" style="font-size:20px">${data.total_cost > 0 ? '$'+data.total_cost.toFixed(4) : '$0.00'}</div></div>
+      </div>
+      <div class="stat-card">
+        <h3>모델별 사용량</h3>
+        <table class="usage-table">
+          <thead><tr><th>모델</th><th>처리 수</th><th>토큰</th><th>비용</th></tr></thead>
+          <tbody>${modelRows || '<tr><td colspan="4" style="color:var(--muted)">데이터 없음</td></tr>'}</tbody>
+        </table>
+      </div>
+    `;
+    switchTab('stats');
+
+  } else if (data.type === 'outputs') {
+    const items = data.items || [];
+    document.getElementById('stats-content').innerHTML = items.map(item => `
+      <div class="history-item">
+        <h4>${item.name}</h4>
+        <div class="meta">${item.files.map(f=>`<span class="badge badge-blue">${f}</span>`).join('')}</div>
+      </div>
+    `).join('') || '<div class="placeholder"><div class="icon">📁</div><p>생성된 파일이 없습니다.</p></div>';
+    switchTab('stats');
+
+  } else if (data.type === 'notion') {
+    document.getElementById('result-content').innerHTML = `
+      <div style="padding:40px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">✅</div>
+        <div style="font-size:16px;margin-bottom:12px;color:var(--green)">Notion 업로드 완료!</div>
+        <a href="${data.url}" target="_blank" style="color:var(--accent);font-size:14px">${data.url}</a>
+      </div>`;
+    switchTab('result');
+  }
+}
+
+// ── 탭 전환 ────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    const names = ['log','result','stats'];
+    el.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// ── 상태 표시 ────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  document.getElementById('status-dot').className = `status-dot ${state === 'running' ? 'running' : ''}`;
+  document.getElementById('status-text').textContent = text;
+}
+
+init();
+</script>
+</body>
+</html>

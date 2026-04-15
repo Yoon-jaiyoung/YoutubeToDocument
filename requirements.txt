@@ -6,3 +6,7 @@ anthropic>=0.20.0
 google-generativeai>=0.4.0
 notion-client>=2.2.1
 mistune>=3.0.0
+fastapi>=0.100.0
+uvicorn>=0.20.0
+sse-starlette>=1.6.0
+mcp>=1.0.0
