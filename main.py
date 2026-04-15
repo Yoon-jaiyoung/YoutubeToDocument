@@ -60,14 +60,14 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     gen_client = LLMClient(model, local_model=local_model)
 
     intent = identify_intent(text, gen_client)
-    tracker.add_step("의도 파악", model, gen_client.pop_usage())
+    tracker.add_step("의도 파악", gen_client.display_name, gen_client.pop_usage())
     print(f"  기술명 파악: {intent.get('tech_name', '?')}")
 
     output_dir = get_output_dir(title)
     draft_path = os.path.join(output_dir, "draft.md")
 
     draft = generate_draft(text, intent, url, gen_client)
-    tracker.add_step("초안 생성", model, gen_client.pop_usage())
+    tracker.add_step("초안 생성", gen_client.display_name, gen_client.pop_usage())
     save_markdown(draft, draft_path)
     print(f"  ✅ 완료 → {draft_path}")
 
@@ -75,7 +75,7 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     step(3, TOTAL, f"AI 검증 중... (모델: {reviewer_model})")
     rev_client = LLMClient(reviewer_model, local_model=local_model)
     review = review_draft(draft, text, rev_client)
-    tracker.add_step("AI 검증", reviewer_model, rev_client.pop_usage())
+    tracker.add_step("AI 검증", rev_client.display_name, rev_client.pop_usage())
 
     review_path = os.path.join(output_dir, "review.md")
     save_markdown(review, review_path)
@@ -84,7 +84,7 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     # ── 4. 최종 매뉴얼 생성 ──────────────────────────────────────────
     step(4, TOTAL, "최종 매뉴얼 생성 중...")
     final = refine_draft(draft, review, gen_client)
-    tracker.add_step("최종 생성", model, gen_client.pop_usage())
+    tracker.add_step("최종 생성", gen_client.display_name, gen_client.pop_usage())
 
     final_path = os.path.join(output_dir, "final.md")
     save_markdown(final, final_path)
@@ -160,7 +160,7 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
         print(f"\n수정 중... (v{version + 1})")
         current_content = open(final_path, encoding="utf-8").read()
         updated = apply_feedback(current_content, feedback, gen_client)
-        tracker.add_step(f"피드백 반영 v{version+1}", model, gen_client.pop_usage())
+        tracker.add_step(f"피드백 반영 v{version+1}", gen_client.display_name, gen_client.pop_usage())
 
         version += 1
         versioned_path = os.path.join(output_dir, f"final_v{version}.md")

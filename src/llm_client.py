@@ -52,6 +52,13 @@ class LLMClient:
         else:
             raise ValueError(f"지원하지 않는 모델 타입: {self.model_type}. (local/claude/gpt/gemini)")
 
+    @property
+    def display_name(self) -> str:
+        """리포트에 표시할 모델 이름"""
+        if self.model_type == "local":
+            return self._model_name  # 실제 모델명 반환
+        return self._model_name
+
     def _record_usage(self, response, model_type: str) -> None:
         """모델별 usage 파싱 후 내부 리스트에 기록"""
         try:

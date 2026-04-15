@@ -62,25 +62,29 @@ class UsageTracker:
 
     # ── 출력 ────────────────────────────────────────────────────────
     def print_report(self) -> None:
-        W = 62
+        # 모델명 최대 길이에 맞춰 컬럼 동적 조정
+        model_w = max((len(s["model"]) for s in self._steps), default=8)
+        model_w = max(model_w, 8)
+        W = 22 + model_w + 7 + 7 + 8 + 10
+
         print(f"\n{'─'*W}")
         print(f"  AI 사용량 리포트")
         print(f"{'─'*W}")
-        print(f"  {'단계':<22} {'모델':<8} {'입력':>7} {'출력':>7} {'합계':>8}")
-        print(f"  {'─'*22} {'─'*8} {'─'*7} {'─'*7} {'─'*8}")
+        print(f"  {'단계':<22} {'모델':<{model_w}} {'입력':>7} {'출력':>7} {'합계':>8}")
+        print(f"  {'─'*22} {'─'*model_w} {'─'*7} {'─'*7} {'─'*8}")
 
         for s in self._steps:
-            calls = f"({s['calls']}회)" if s['calls'] > 1 else ""
+            calls = f"({s['calls']}회)" if s["calls"] > 1 else ""
             step_label = f"{s['step']}{calls}"
             print(
-                f"  {step_label:<22} {s['model']:<8}"
+                f"  {step_label:<22} {s['model']:<{model_w}}"
                 f" {s['prompt_tokens']:>7,} {s['completion_tokens']:>7,}"
                 f" {s['total_tokens']:>8,}"
             )
 
-        print(f"  {'─'*22} {'─'*8} {'─'*7} {'─'*7} {'─'*8}")
+        print(f"  {'─'*22} {'─'*model_w} {'─'*7} {'─'*7} {'─'*8}")
         print(
-            f"  {'합계':<22} {'':<8}"
+            f"  {'합계':<22} {'':<{model_w}}"
             f" {self.total_prompt:>7,} {self.total_completion:>7,}"
             f" {self.total_tokens:>8,}"
         )
