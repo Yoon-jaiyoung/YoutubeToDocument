@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 import sys
 import tempfile
 
-# 프로젝트 루트를 경로에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.extractor import get_transcript
@@ -16,6 +16,7 @@ from src.reviewer import review_draft
 from src.refiner import refine_draft, apply_feedback
 from src.writer import get_output_dir, save_markdown
 from src.history import new_entry, save_entry, add_feedback, display_history, find_entry
+from src.usage_tracker import UsageTracker, display_usage_stats
 
 
 def step(n, total, msg):
@@ -25,19 +26,24 @@ def step(n, total, msg):
 def run(url: str, model: str, reviewer_model: str, local_model: str, notion: bool = False):
     TOTAL = 6 if notion else 5
     temp_dir = tempfile.mkdtemp()
+    tracker = UsageTracker(url=url, model=model, reviewer=reviewer_model)
 
     # ── 1. 자막/오디오 추출 ──────────────────────────────────────────
     step(1, TOTAL, "자막 추출 중...")
     existing = find_entry(url)
     if existing:
         print(f"  ⚠️  이전 분석 이력 발견: {existing['title']} ({existing['created_at'][:10]})")
-        answer = input("  새로 분석하시겠습니까? [y/N]: ").strip().lower()
-        if answer != 'y':
+        try:
+            answer = input("  새로 분석하시겠습니까? [y/N]: ").strip().lower()
+        except EOFError:
+            answer = "n"
+        if answer != "y":
             print(f"  기존 결과물 경로: {existing['output_dir']}")
             return
 
     result = get_transcript(url, temp_dir=temp_dir)
     title = result["title"]
+    tracker.title = title
 
     if result["method"] == "stt":
         step(1, TOTAL, "STT 변환 중...")
@@ -52,13 +58,16 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     # ── 2. 초안 생성 ─────────────────────────────────────────────────
     step(2, TOTAL, f"초안 매뉴얼 생성 중... (모델: {model})")
     gen_client = LLMClient(model, local_model=local_model)
+
     intent = identify_intent(text, gen_client)
+    tracker.add_step("의도 파악", model, gen_client.pop_usage())
     print(f"  기술명 파악: {intent.get('tech_name', '?')}")
 
     output_dir = get_output_dir(title)
     draft_path = os.path.join(output_dir, "draft.md")
 
     draft = generate_draft(text, intent, url, gen_client)
+    tracker.add_step("초안 생성", model, gen_client.pop_usage())
     save_markdown(draft, draft_path)
     print(f"  ✅ 완료 → {draft_path}")
 
@@ -66,6 +75,7 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     step(3, TOTAL, f"AI 검증 중... (모델: {reviewer_model})")
     rev_client = LLMClient(reviewer_model, local_model=local_model)
     review = review_draft(draft, text, rev_client)
+    tracker.add_step("AI 검증", reviewer_model, rev_client.pop_usage())
 
     review_path = os.path.join(output_dir, "review.md")
     save_markdown(review, review_path)
@@ -74,6 +84,7 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     # ── 4. 최종 매뉴얼 생성 ──────────────────────────────────────────
     step(4, TOTAL, "최종 매뉴얼 생성 중...")
     final = refine_draft(draft, review, gen_client)
+    tracker.add_step("최종 생성", model, gen_client.pop_usage())
 
     final_path = os.path.join(output_dir, "final.md")
     save_markdown(final, final_path)
@@ -99,10 +110,18 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
             )
             print(f"  ✅ 완료 → {notion_url}")
 
-    # ── 6. 이력 저장 ─────────────────────────────────────────────────
+    # ── 사용량 저장 ──────────────────────────────────────────────────
+    usage_path = tracker.save(output_dir)
+
+    # ── 이력 저장 ────────────────────────────────────────────────────
     step(TOTAL, TOTAL, "이력 저장 중...")
     entry = new_entry(url, title, model, reviewer_model, output_dir)
     entry["versions"].append(final_path)
+    entry["usage"] = {
+        "total_tokens": tracker.total_tokens,
+        "estimated_cost_usd": round(tracker.total_cost, 6),
+        "model": model,
+    }
     if notion_url:
         entry["notion_url"] = notion_url
     save_entry(entry)
@@ -119,8 +138,12 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
     print(f"   초안    : {draft_path}")
     print(f"   검토    : {review_path}")
     print(f"   최종    : {final_path}")
+    print(f"   사용량  : {usage_path}")
     if notion_url:
         print(f"   Notion  : {notion_url}")
+
+    # ── AI 사용량 리포트 ─────────────────────────────────────────────
+    tracker.print_report()
 
     # ── 사용자 피드백 루프 ────────────────────────────────────────────
     version = 1
@@ -137,31 +160,42 @@ def run(url: str, model: str, reviewer_model: str, local_model: str, notion: boo
         print(f"\n수정 중... (v{version + 1})")
         current_content = open(final_path, encoding="utf-8").read()
         updated = apply_feedback(current_content, feedback, gen_client)
+        tracker.add_step(f"피드백 반영 v{version+1}", model, gen_client.pop_usage())
 
         version += 1
         versioned_path = os.path.join(output_dir, f"final_v{version}.md")
         save_markdown(updated, versioned_path)
-        # final.md도 최신으로 덮어쓰기
         save_markdown(updated, final_path)
 
-        # 이력에 피드백 추가
-        history = __import__('src.history', fromlist=['load_history'])
-        from src.history import load_history
-        all_history = load_history()
+        # 이력 업데이트
+        all_history = _load_history()
         for h in reversed(all_history):
             if h.get("url") == url:
                 add_feedback(h, feedback, versioned_path)
+                h["usage"]["total_tokens"] = tracker.total_tokens
+                h["usage"]["estimated_cost_usd"] = round(tracker.total_cost, 6)
                 break
-        import json
-        with open("history.json", "w", encoding="utf-8") as f:
-            json.dump(all_history, f, ensure_ascii=False, indent=2)
+        _save_history(all_history)
 
+        # 사용량 파일 갱신
+        tracker.save(output_dir)
+        tracker.print_report()
         print(f"✅ 수정 완료 → {versioned_path}")
-        print(f"   (final.md도 최신 버전으로 업데이트됨)")
+
+
+def _load_history() -> list:
+    if not os.path.exists("history.json"):
+        return []
+    with open("history.json", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_history(data: list) -> None:
+    with open("history.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def _notion_only(md_path: str):
-    """기존 MD 파일을 Notion에만 업로드"""
     api_key = os.environ.get("NOTION_API_KEY")
     page_id = os.environ.get("NOTION_PAGE_ID")
     if not api_key or not page_id:
@@ -197,6 +231,7 @@ def main():
   python main.py --url "https://youtube.com/watch?v=..." --notion
   python main.py --notion-only output/제목/final.md
   python main.py --history
+  python main.py --usage
 
 Notion 환경변수:
   export NOTION_API_KEY="secret_..."
@@ -205,32 +240,29 @@ Notion 환경변수:
     )
     parser.add_argument("--url", help="YouTube 영상 URL")
     parser.add_argument(
-        "--model",
-        default="local",
+        "--model", default="local",
         choices=["local", "claude", "gpt", "gemini"],
         help="매뉴얼 생성 AI 모델 (기본값: local)"
     )
     parser.add_argument(
-        "--reviewer",
-        default=None,
+        "--reviewer", default=None,
         choices=["local", "claude", "gpt", "gemini"],
         help="검증 AI 모델 (기본값: --model과 동일)"
     )
     parser.add_argument(
         "--local-model",
         default="mlx-community/gemma-4-e4b-it-4bit",
-        help="로컬 LLM 모델명 (기본값: mlx-community/gemma-4-e4b-it-4bit)"
+        help="로컬 LLM 모델명"
     )
     parser.add_argument("--history", action="store_true", help="분석 이력 조회")
+    parser.add_argument("--usage", action="store_true", help="전체 AI 사용량 통계 조회")
     parser.add_argument(
-        "--notion",
-        action="store_true",
-        help="최종 매뉴얼을 Notion에 업로드 (NOTION_API_KEY, NOTION_PAGE_ID 환경변수 필요)"
+        "--notion", action="store_true",
+        help="최종 매뉴얼을 Notion에 업로드 (NOTION_API_KEY, NOTION_PAGE_ID 필요)"
     )
     parser.add_argument(
-        "--notion-only",
-        metavar="FINAL_MD",
-        help="기존 final.md 파일을 Notion에만 업로드 (재처리 없이)"
+        "--notion-only", metavar="FINAL_MD",
+        help="기존 final.md 파일을 Notion에만 업로드"
     )
 
     args = parser.parse_args()
@@ -239,7 +271,10 @@ Notion 환경변수:
         display_history()
         return
 
-    # Notion 단독 업로드 모드
+    if args.usage:
+        display_usage_stats()
+        return
+
     if args.notion_only:
         _notion_only(args.notion_only)
         return
