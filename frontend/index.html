@@ -26,11 +26,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 .model-badges { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
-.model-badge {
-  display: flex; align-items: center; gap: 5px;
-  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
-  border: 1px solid var(--border);
-}
+.model-badge { display: flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); }
 .model-badge.ok  { background: rgba(63,185,80,.12); color: var(--green); border-color: rgba(63,185,80,.3); }
 .model-badge.off { background: rgba(139,148,158,.08); color: var(--muted); }
 .model-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -39,26 +35,37 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 .layout { display: flex; flex: 1; overflow: hidden; }
 
 /* Sidebar */
-.sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
-.sidebar-inner { flex: 1; overflow-y: auto; padding: 12px 0; }
-.sidebar-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 8px 16px 6px; }
-.tool-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; font-size: 13px; }
+.sidebar { width: 230px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.sidebar-inner { flex: 1; overflow-y: auto; padding: 10px 0 16px; }
+
+/* 그룹 헤더 */
+.group-header { display: flex; align-items: center; gap: 7px; padding: 10px 14px 5px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; cursor: pointer; user-select: none; }
+.group-header:hover { color: var(--text); }
+.group-header .g-icon { font-size: 13px; }
+.group-header .chevron { margin-left: auto; font-size: 10px; transition: transform .2s; }
+.group-header.collapsed .chevron { transform: rotate(-90deg); }
+.group-body { overflow: hidden; }
+.group-body.collapsed { display: none; }
+
+/* 도구 아이템 */
+.tool-item { display: flex; align-items: center; gap: 9px; padding: 8px 14px 8px 26px; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; font-size: 13px; }
 .tool-item:hover { background: var(--surface2); }
 .tool-item.active { border-left-color: var(--accent); background: var(--surface2); color: var(--accent); }
-.tool-item.coming-soon { opacity: .45; cursor: default; }
+.tool-item.coming-soon { opacity: .4; cursor: default; }
 .tool-item.coming-soon:hover { background: none; }
-.tool-icon { font-size: 16px; width: 20px; text-align: center; }
-.badge-soon { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 10px; background: rgba(210,153,34,.2); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); margin-left: auto; }
-.sidebar-sep { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
-.sidebar-action { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 6px 16px; }
-.sidebar-action span { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.tool-icon { font-size: 14px; width: 18px; text-align: center; }
+.badge-soon { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 10px; background: rgba(210,153,34,.18); color: var(--yellow); border: 1px solid rgba(210,153,34,.25); margin-left: auto; }
+
+/* Sidebar 하단 MCP 섹션 */
+.sidebar-sep { border: none; border-top: 1px solid var(--border); margin: 10px 0 6px; }
+.sidebar-action { display: flex; align-items: center; justify-content: space-between; padding: 4px 14px; }
+.sidebar-action span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
 .btn-add-mcp { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer; transition: all .15s; }
 .btn-add-mcp:hover { border-color: var(--accent); color: var(--accent); }
-.mcp-server-group { margin-bottom: 4px; }
-.mcp-server-label { font-size: 11px; color: var(--muted); padding: 4px 16px 2px; display: flex; align-items: center; justify-content: space-between; }
+.mcp-server-label { font-size: 11px; color: var(--muted); padding: 4px 14px 2px; display: flex; align-items: center; justify-content: space-between; }
 .mcp-server-label .btn-del { background: none; border: none; color: var(--red); cursor: pointer; font-size: 12px; opacity: 0; padding: 0 4px; }
 .mcp-server-label:hover .btn-del { opacity: 1; }
-.tool-item.mcp { padding-left: 24px; }
+.tool-item.mcp { padding-left: 22px; }
 
 /* Main */
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -73,17 +80,11 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 .field { margin-bottom: 14px; }
 .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
 .field label .req { color: var(--red); margin-left: 2px; }
-.field input, .field select, .field textarea {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
-  padding: 8px 10px; color: var(--text); font-size: 13px; outline: none; transition: border-color .15s;
-}
+.field input, .field select, .field textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 13px; outline: none; transition: border-color .15s; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
 .field textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 .field select option { background: var(--surface2); }
-.btn-run {
-  width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px;
-  font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; margin-top: 4px;
-}
+.btn-run { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; margin-top: 4px; }
 .btn-run:hover { opacity: .85; }
 .btn-run:disabled { opacity: .4; cursor: not-allowed; }
 
@@ -97,15 +98,15 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 .tab-content.active { display: flex; flex-direction: column; flex: 1; }
 .copy-area { padding: 0 12px; }
 
-/* Copy buttons */
+/* Copy */
 .btn-copy { padding: 4px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--muted); font-size: 11px; cursor: pointer; transition: all .15s; }
 .btn-copy:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn-copy.copied { background: var(--green); color: #fff; border-color: var(--green); }
 .code-block-wrap { position: relative; }
-.code-block-wrap .btn-copy-code { position: absolute; top: 8px; right: 8px; padding: 3px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 11px; cursor: pointer; transition: all .15s; opacity: 0; }
+.code-block-wrap .btn-copy-code { position: absolute; top: 8px; right: 8px; padding: 3px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 11px; cursor: pointer; opacity: 0; transition: all .15s; }
 .code-block-wrap:hover .btn-copy-code { opacity: 1; }
-.code-block-wrap .btn-copy-code:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-.code-block-wrap .btn-copy-code.copied { background: var(--green); color: #fff; border-color: var(--green); opacity: 1; }
+.code-block-wrap .btn-copy-code:hover { background: var(--accent); color: #fff; }
+.code-block-wrap .btn-copy-code.copied { background: var(--green); color: #fff; opacity: 1; }
 
 /* Log */
 #log-content { flex: 1; overflow-y: auto; padding: 14px 16px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.7; background: var(--bg); }
@@ -115,7 +116,7 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 .log-line.log-err  { color: var(--red); }
 .log-line.log-info { color: var(--muted); }
 
-/* Markdown result */
+/* Markdown */
 #result-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
 #result-content .markdown-body { max-width: 860px; }
 #result-content .markdown-body h1 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; }
@@ -133,7 +134,7 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 #result-content .markdown-body li { margin-bottom: 4px; line-height: 1.6; }
 #result-content .markdown-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
-/* Stats result */
+/* Stats */
 #stats-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
 .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; }
 .stat-card h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
@@ -168,9 +169,9 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
 .modal .field label { color: var(--text); font-size: 13px; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
-.btn-secondary { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; cursor: pointer; transition: all .15s; }
+.btn-secondary { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; cursor: pointer; }
 .btn-secondary:hover { border-color: var(--muted); }
-.btn-primary { padding: 8px 16px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+.btn-primary { padding: 8px 16px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn-primary:hover { opacity: .85; }
 .field small { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; }
 </style>
@@ -189,9 +190,10 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-inner">
-      <div class="sidebar-title">내장 도구</div>
-      <div id="tool-list"></div>
+      <!-- 내장 MCP 그룹 목록 -->
+      <div id="tool-groups"></div>
 
+      <!-- 외부 MCP 섹션 -->
       <hr class="sidebar-sep">
       <div class="sidebar-action">
         <span>외부 MCP</span>
@@ -232,13 +234,11 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
         <div id="tab-log" class="tab-content active">
           <div id="log-content"><span style="color:var(--muted);font-size:12px">도구를 실행하면 진행 로그가 표시됩니다.</span></div>
         </div>
-
         <div id="tab-result" class="tab-content">
           <div id="result-content">
             <div class="placeholder"><div class="icon">📄</div><p>실행 결과가 여기에 표시됩니다.</p></div>
           </div>
         </div>
-
         <div id="tab-stats" class="tab-content">
           <div id="stats-content">
             <div class="placeholder"><div class="icon">📊</div><p>이력/통계 데이터가 여기에 표시됩니다.</p></div>
@@ -254,35 +254,16 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
   </div>
 </div>
 
-<!-- MCP 서버 추가 모달 -->
+<!-- 외부 MCP 추가 모달 -->
 <div class="modal-overlay" id="add-modal">
   <div class="modal">
     <h3>🔌 외부 MCP 서버 추가</h3>
-    <div class="field">
-      <label>서버 ID (영문, 하이픈 허용)<span class="req">*</span></label>
-      <input id="mcp-name" type="text" placeholder="my-mcp-server">
-    </div>
-    <div class="field">
-      <label>표시 이름<span class="req">*</span></label>
-      <input id="mcp-label" type="text" placeholder="내 MCP 서버">
-    </div>
-    <div class="field">
-      <label>실행 명령어<span class="req">*</span></label>
-      <input id="mcp-command" type="text" placeholder="/path/to/python3 또는 node">
-      <small>절대 경로 권장</small>
-    </div>
-    <div class="field">
-      <label>인자 (공백 구분)</label>
-      <input id="mcp-args" type="text" placeholder="/path/to/server.py --arg value">
-    </div>
-    <div class="field">
-      <label>작업 디렉토리</label>
-      <input id="mcp-cwd" type="text" placeholder="/path/to/project">
-    </div>
-    <div class="field">
-      <label>환경변수 (JSON)</label>
-      <textarea id="mcp-env" placeholder='{"API_KEY": "value"}'></textarea>
-    </div>
+    <div class="field"><label>서버 ID (영문·하이픈)<span class="req">*</span></label><input id="mcp-name" type="text" placeholder="my-server"></div>
+    <div class="field"><label>표시 이름<span class="req">*</span></label><input id="mcp-label" type="text" placeholder="내 서버"></div>
+    <div class="field"><label>실행 명령어<span class="req">*</span></label><input id="mcp-command" type="text" placeholder="/path/to/python3"><small>절대 경로 권장</small></div>
+    <div class="field"><label>인자 (공백 구분)</label><input id="mcp-args" type="text" placeholder="/path/to/server.py"></div>
+    <div class="field"><label>작업 디렉토리</label><input id="mcp-cwd" type="text" placeholder="/path/to/project"></div>
+    <div class="field"><label>환경변수 (JSON)</label><textarea id="mcp-env" placeholder='{"KEY": "value"}'></textarea></div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeAddModal()">취소</button>
       <button class="btn-primary" onclick="saveMcpServer()">추가</button>
@@ -291,155 +272,127 @@ header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
 </div>
 
 <script>
-let tools = [];
-let outputs = [];
+let toolGroups   = [];   // [{group, group_icon, tools}]
+let outputs      = [];
 let availableModels = [];
-let currentTool = null;
-let currentMcpServer = null;  // { server, tool } for external MCP tools
+let currentTool  = null;
+let currentMcp   = null; // {server, tool, schema}
 let _rawMarkdown = '';
-let _currentTab = 'log';
+let _currentTab  = 'log';
 
 // ── 초기화 ──────────────────────────────────────────────────────────
 async function init() {
-  const [t, o, status] = await Promise.all([
+  const [groups, o, status] = await Promise.all([
     fetch('/api/tools').then(r => r.json()),
     fetch('/api/outputs').then(r => r.json()),
     fetch('/api/status').then(r => r.json()),
   ]);
-  tools = t;
-  outputs = o;
-  availableModels = Object.entries(status.models)
-    .filter(([, ok]) => ok)
-    .map(([m]) => m);
+  toolGroups = groups;
+  outputs    = o;
+  availableModels = Object.entries(status.models).filter(([,ok])=>ok).map(([m])=>m);
 
   renderModelBadges(status);
-  renderSidebar();
+  renderToolGroups();
   await loadMcpServers();
 }
 
 function renderModelBadges(status) {
   const models = [
-    { key: 'local',  label: status.local.ok ? (status.local.model?.split('/').pop() || 'Local LLM') : 'Local LLM' },
-    { key: 'claude', label: 'Claude' },
-    { key: 'gpt',    label: 'GPT' },
-    { key: 'gemini', label: 'Gemini' },
+    {key:'local',  label: status.local.ok ? (status.local.model?.split('/').pop()||'Local') : 'Local'},
+    {key:'claude', label:'Claude'},
+    {key:'gpt',    label:'GPT'},
+    {key:'gemini', label:'Gemini'},
   ];
-  document.getElementById('model-badges').innerHTML = models.map(m => {
-    const ok = status.models[m.key];
-    return `<div class="model-badge ${ok ? 'ok' : 'off'}"><span class="dot"></span>${m.label}</div>`;
-  }).join('');
+  document.getElementById('model-badges').innerHTML = models.map(m =>
+    `<div class="model-badge ${status.models[m.key]?'ok':'off'}"><span class="dot"></span>${m.label}</div>`
+  ).join('');
 }
 
-function renderSidebar() {
-  document.getElementById('tool-list').innerHTML = tools.map(t => {
-    if (t.status === 'coming_soon') {
-      return `
-        <div class="tool-item coming-soon" title="${t.description}">
-          <span class="tool-icon">${t.icon}</span>
-          <span>${t.label}</span>
-          <span class="badge-soon">준비 중</span>
-        </div>`;
-    }
-    return `
-      <div class="tool-item" data-name="${t.name}" onclick="selectBuiltinTool('${t.name}')">
-        <span class="tool-icon">${t.icon}</span>
-        <span>${t.label}</span>
-      </div>`;
-  }).join('');
+// ── 그룹 사이드바 렌더링 ─────────────────────────────────────────────
+function renderToolGroups() {
+  const container = document.getElementById('tool-groups');
+  container.innerHTML = toolGroups.map((g, gi) => `
+    <div class="group-header" onclick="toggleGroup(${gi})" id="gh-${gi}">
+      <span class="g-icon">${g.group_icon||'📦'}</span>
+      <span>${g.group}</span>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="group-body" id="gb-${gi}">
+      ${(g.tools||[]).map(t => renderToolItem(t)).join('')}
+    </div>
+  `).join('');
 }
 
-// ── MCP 서버 목록 로드 ────────────────────────────────────────────────
-async function loadMcpServers() {
-  const servers = await fetch('/api/mcp/servers').then(r => r.json());
-  const container = document.getElementById('mcp-server-list');
-  if (!servers.length) {
-    container.innerHTML = '<div style="padding:6px 16px;font-size:11px;color:var(--muted)">서버 없음</div>';
-    return;
+function renderToolItem(t) {
+  if (t.status === 'coming_soon') {
+    return `<div class="tool-item coming-soon" title="${t.description}">
+      <span class="tool-icon">${t.icon}</span>
+      <span>${t.label}</span>
+      <span class="badge-soon">준비 중</span>
+    </div>`;
   }
-  container.innerHTML = '';
-  for (const srv of servers) {
-    const group = document.createElement('div');
-    group.className = 'mcp-server-group';
-    group.dataset.server = srv.name;
+  return `<div class="tool-item" data-name="${t.name}" onclick="selectTool('${t.name}')">
+    <span class="tool-icon">${t.icon}</span>
+    <span>${t.label}</span>
+  </div>`;
+}
 
-    const labelEl = document.createElement('div');
-    labelEl.className = 'mcp-server-label';
-    labelEl.innerHTML = `
-      <span>🔌 ${srv.label}</span>
-      <button class="btn-del" title="삭제" onclick="deleteMcpServer('${srv.name}')">✕</button>
-    `;
-    group.appendChild(labelEl);
-
-    // 도구 로드
-    const toolsEl = document.createElement('div');
-    toolsEl.innerHTML = '<div style="padding:4px 24px;font-size:11px;color:var(--muted)">로딩 중...</div>';
-    group.appendChild(toolsEl);
-    container.appendChild(group);
-
-    fetch(`/api/mcp/servers/${srv.name}/tools`)
-      .then(r => r.json())
-      .then(tools => {
-        if (tools.detail) {
-          toolsEl.innerHTML = `<div style="padding:4px 24px;font-size:11px;color:var(--red)">${tools.detail}</div>`;
-          return;
-        }
-        toolsEl.innerHTML = tools.map(t => `
-          <div class="tool-item mcp" onclick="selectMcpTool('${srv.name}', '${t.name}', ${JSON.stringify(JSON.stringify(t)).slice(1,-1)})">
-            <span class="tool-icon">⚙</span>
-            <span>${t.name}</span>
-          </div>
-        `).join('') || '<div style="padding:4px 24px;font-size:11px;color:var(--muted)">도구 없음</div>';
-      })
-      .catch(() => {
-        toolsEl.innerHTML = '<div style="padding:4px 24px;font-size:11px;color:var(--red)">연결 실패</div>';
-      });
-  }
+function toggleGroup(gi) {
+  const header = document.getElementById(`gh-${gi}`);
+  const body   = document.getElementById(`gb-${gi}`);
+  header.classList.toggle('collapsed');
+  body.classList.toggle('collapsed');
 }
 
 // ── 도구 선택 ────────────────────────────────────────────────────────
-function clearToolActive() {
+function clearActive() {
   document.querySelectorAll('.tool-item').forEach(el => el.classList.remove('active'));
 }
 
-function selectBuiltinTool(name) {
-  const tool = tools.find(t => t.name === name);
+function selectTool(name) {
+  let tool = null;
+  for (const g of toolGroups) {
+    tool = (g.tools||[]).find(t => t.name === name);
+    if (tool) break;
+  }
   if (!tool || tool.status === 'coming_soon') return;
+
   currentTool = tool;
-  currentMcpServer = null;
-  clearToolActive();
+  currentMcp  = null;
+  clearActive();
   document.querySelector(`.tool-item[data-name="${name}"]`)?.classList.add('active');
-  document.getElementById('tool-title').textContent = `${currentTool.icon} ${currentTool.label}`;
-  document.getElementById('tool-desc').textContent = currentTool.description;
+  document.getElementById('tool-title').textContent = `${tool.icon} ${tool.label}`;
+  document.getElementById('tool-desc').textContent  = tool.description;
   document.getElementById('btn-run').disabled = false;
-  renderBuiltinForm(currentTool.fields);
+  renderBuiltinForm(tool.fields);
 }
 
 function selectMcpTool(serverName, toolName, toolJson) {
   const tool = JSON.parse(toolJson);
   currentTool = null;
-  currentMcpServer = { server: serverName, tool: toolName, schema: tool.inputSchema };
-  clearToolActive();
+  currentMcp  = {server: serverName, tool: toolName, schema: tool.inputSchema};
+  clearActive();
   document.getElementById('tool-title').textContent = `⚙ ${toolName}`;
-  document.getElementById('tool-desc').textContent = tool.description || '외부 MCP 서버 도구';
+  document.getElementById('tool-desc').textContent  = tool.description || '외부 MCP 서버 도구';
   document.getElementById('btn-run').disabled = false;
-  renderMcpToolForm(tool.inputSchema);
+  renderMcpForm(tool.inputSchema);
 }
 
+// ── 폼 렌더링 ────────────────────────────────────────────────────────
 function renderBuiltinForm(fields) {
-  const container = document.getElementById('form-fields');
+  const c = document.getElementById('form-fields');
   if (!fields.length) {
-    container.innerHTML = '<p style="color:var(--muted);font-size:12px;margin-bottom:14px">추가 입력 없이 바로 실행됩니다.</p>';
+    c.innerHTML = '<p style="color:var(--muted);font-size:12px;margin-bottom:14px">추가 입력 없이 바로 실행됩니다.</p>';
     return;
   }
-  container.innerHTML = fields.map(f => {
+  c.innerHTML = fields.map(f => {
     const req = f.required ? '<span class="req">*</span>' : '';
     if (f.type === 'select') {
-      // availableModels 필터 적용
-      const opts = f.options
-        .filter(o => o !== 'local' && o !== 'claude' && o !== 'gpt' && o !== 'gemini'
-                     ? true : availableModels.includes(o))
-        .map(o => `<option value="${o}" ${o===f.default?'selected':''}>${o}</option>`).join('');
-      if (!opts) return `<div class="field"><label>${f.label}${req}</label><p style="color:var(--red);font-size:12px">사용 가능한 모델 없음</p></div>`;
+      const filtered = (f.options||[]).filter(o =>
+        !['local','claude','gpt','gemini'].includes(o) || availableModels.includes(o)
+      );
+      if (!filtered.length) return `<div class="field"><label>${f.label}${req}</label><p style="color:var(--red);font-size:12px">사용 가능한 모델 없음</p></div>`;
+      const opts = filtered.map(o => `<option value="${o}" ${o===f.default?'selected':''}>${o}</option>`).join('');
       return `<div class="field"><label>${f.label}${req}</label><select id="field-${f.key}">${opts}</select></div>`;
     }
     if (f.type === 'output_select') {
@@ -453,49 +406,46 @@ function renderBuiltinForm(fields) {
   }).join('');
 }
 
-function renderMcpToolForm(schema) {
-  const container = document.getElementById('form-fields');
-  if (!schema || !schema.properties || !Object.keys(schema.properties).length) {
-    container.innerHTML = '<p style="color:var(--muted);font-size:12px;margin-bottom:14px">추가 입력 없이 바로 실행됩니다.</p>';
+function renderMcpForm(schema) {
+  const c = document.getElementById('form-fields');
+  if (!schema?.properties || !Object.keys(schema.properties).length) {
+    c.innerHTML = '<p style="color:var(--muted);font-size:12px;margin-bottom:14px">추가 입력 없이 바로 실행됩니다.</p>';
     return;
   }
   const required = schema.required || [];
-  container.innerHTML = Object.entries(schema.properties).map(([key, prop]) => {
-    const req = required.includes(key) ? '<span class="req">*</span>' : '';
-    const desc = prop.description ? `<small style="color:var(--muted);font-size:11px;margin-top:3px;display:block">${prop.description}</small>` : '';
+  c.innerHTML = Object.entries(schema.properties).map(([key, prop]) => {
+    const req  = required.includes(key) ? '<span class="req">*</span>' : '';
+    const desc = prop.description ? `<small>${prop.description}</small>` : '';
     if (prop.enum) {
       const opts = prop.enum.map(v => `<option value="${v}" ${v===prop.default?'selected':''}>${v}</option>`).join('');
       return `<div class="field"><label>${key}${req}</label><select id="mcp-field-${key}">${opts}</select>${desc}</div>`;
     }
-    if (prop.type === 'string' && (key.includes('content') || key.includes('text') || key.includes('feedback'))) {
+    if (prop.type==='string' && /content|text|feedback/i.test(key)) {
       return `<div class="field"><label>${key}${req}</label><textarea id="mcp-field-${key}" placeholder="${prop.description||''}"></textarea>${desc}</div>`;
     }
-    return `<div class="field"><label>${key}${req}</label><input id="mcp-field-${key}" type="text" placeholder="${prop.description||''}"><${desc}</div>`;
+    return `<div class="field"><label>${key}${req}</label><input id="mcp-field-${key}" type="text" placeholder="${prop.description||''}">${desc}</div>`;
   }).join('');
 }
 
 // ── 실행 ────────────────────────────────────────────────────────────
 async function runTool() {
-  clearLog();
-  clearResult();
+  clearLog(); clearResult();
   setStatus('running', '실행 중...');
   document.getElementById('btn-run').disabled = true;
   switchTab('log');
 
   let url, args = {};
 
-  if (currentMcpServer) {
-    // 외부 MCP 도구
-    const schema = currentMcpServer.schema;
+  if (currentMcp) {
+    const schema = currentMcp.schema;
     if (schema?.properties) {
       for (const key of Object.keys(schema.properties)) {
         const el = document.getElementById(`mcp-field-${key}`);
         if (el) args[key] = el.value.trim();
       }
     }
-    url = `/api/mcp/execute/${currentMcpServer.server}/${currentMcpServer.tool}`;
+    url = `/api/mcp/execute/${currentMcp.server}/${currentMcp.tool}`;
   } else if (currentTool) {
-    // 내장 도구
     for (const f of currentTool.fields) {
       const el = document.getElementById(`field-${f.key}`);
       if (el) args[f.key] = el.value.trim();
@@ -503,289 +453,211 @@ async function runTool() {
     for (const f of currentTool.fields) {
       if (f.required && !args[f.key]) {
         alert(`${f.label}을(를) 입력하세요.`);
-        setStatus('idle', '대기 중');
+        setStatus('idle','대기 중');
         document.getElementById('btn-run').disabled = false;
         return;
       }
     }
     url = `/api/execute/${currentTool.name}`;
-  } else {
-    return;
-  }
+  } else return;
 
   const res = await fetch(url, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({args}),
   });
   const {task_id} = await res.json();
 
   const es = new EventSource(`/api/stream/${task_id}`);
-  es.onmessage = (e) => {
+  es.onmessage = e => {
     const item = JSON.parse(e.data);
-    if (item.type === 'log') {
-      appendLog(item.text);
-    } else if (item.type === 'result') {
+    if (item.type === 'log')    appendLog(item.text);
+    else if (item.type === 'result') {
       renderResult(item.data);
-      setStatus('idle', '완료');
+      setStatus('idle','완료');
       document.getElementById('btn-run').disabled = false;
       fetch('/api/outputs').then(r=>r.json()).then(o=>{outputs=o;});
     } else if (item.type === 'error') {
       appendLog(`❌ 오류: ${item.message}`, 'log-err');
-      setStatus('idle', `오류: ${item.message}`);
+      setStatus('idle', `오류`);
       document.getElementById('btn-run').disabled = false;
-    } else if (item.type === 'done') {
-      es.close();
-    }
+    } else if (item.type === 'done') es.close();
   };
-  es.onerror = () => {
-    es.close();
-    setStatus('idle', '연결 종료');
-    document.getElementById('btn-run').disabled = false;
-  };
+  es.onerror = () => { es.close(); setStatus('idle','연결 종료'); document.getElementById('btn-run').disabled = false; };
 }
 
-// ── 로그 ────────────────────────────────────────────────────────────
-function clearLog() {
-  document.getElementById('log-content').innerHTML = '';
-}
+// ── 로그 ─────────────────────────────────────────────────────────────
+function clearLog() { document.getElementById('log-content').innerHTML = ''; }
 function appendLog(text, cls='log-line') {
   const c = document.getElementById('log-content');
-  let lineClass = cls;
-  if (text.startsWith('[') && text.includes('/')) lineClass = 'log-line log-step';
-  else if (text.includes('✅')) lineClass = 'log-line log-ok';
-  else if (text.includes('❌')) lineClass = 'log-line log-err';
-  else if (text.startsWith('  ')) lineClass = 'log-line log-info';
+  let lc = cls;
+  if (text.startsWith('[') && text.includes('/')) lc = 'log-line log-step';
+  else if (text.includes('✅')) lc = 'log-line log-ok';
+  else if (text.includes('❌')) lc = 'log-line log-err';
+  else if (text.startsWith('  ')) lc = 'log-line log-info';
   const div = document.createElement('div');
-  div.className = lineClass;
-  div.textContent = text;
-  c.appendChild(div);
-  c.scrollTop = c.scrollHeight;
+  div.className = lc; div.textContent = text;
+  c.appendChild(div); c.scrollTop = c.scrollHeight;
 }
 
 // ── 결과 렌더링 ──────────────────────────────────────────────────────
 function clearResult() {
-  document.getElementById('result-content').innerHTML =
-    '<div class="placeholder"><div class="icon">⏳</div><p>처리 중...</p></div>';
-  document.getElementById('stats-content').innerHTML =
-    '<div class="placeholder"><div class="icon">⏳</div><p>처리 중...</p></div>';
+  document.getElementById('result-content').innerHTML = '<div class="placeholder"><div class="icon">⏳</div><p>처리 중...</p></div>';
+  document.getElementById('stats-content').innerHTML  = '<div class="placeholder"><div class="icon">⏳</div><p>처리 중...</p></div>';
 }
 
 function renderResult(data) {
   if (!data) return;
-
   if (data.type === 'manual' && data.content) {
     _rawMarkdown = data.content;
-    const html = marked.parse(data.content);
-    document.getElementById('result-content').innerHTML = `<div class="markdown-body">${html}</div>`;
+    document.getElementById('result-content').innerHTML = `<div class="markdown-body">${marked.parse(data.content)}</div>`;
     addCodeCopyButtons();
-
     let usageHtml = '';
     if (data.usage_steps) {
       const rows = data.usage_steps.map(s =>
         `<tr><td>${s.step}</td><td>${s.model}</td><td>${s.prompt_tokens.toLocaleString()}</td><td>${s.completion_tokens.toLocaleString()}</td><td><strong>${s.total_tokens.toLocaleString()}</strong></td></tr>`
       ).join('');
-      usageHtml = `
-        <div class="stat-card">
-          <h3>AI 사용량</h3>
-          <table class="usage-table">
-            <thead><tr><th>단계</th><th>모델</th><th>입력</th><th>출력</th><th>합계</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <div style="margin-top:10px;font-size:12px;color:var(--muted)">
-            총 ${data.total_tokens?.toLocaleString()} 토큰
-            ${data.estimated_cost > 0 ? ` · 예상 비용 $${data.estimated_cost.toFixed(4)}` : ' · 무료 (로컬)'}
-          </div>
-        </div>`;
+      usageHtml = `<div class="stat-card"><h3>AI 사용량</h3><table class="usage-table"><thead><tr><th>단계</th><th>모델</th><th>입력</th><th>출력</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table><div style="margin-top:10px;font-size:12px;color:var(--muted)">총 ${data.total_tokens?.toLocaleString()} 토큰${data.estimated_cost>0?` · $${data.estimated_cost.toFixed(4)}`:' · 무료'}</div></div>`;
     }
     document.getElementById('stats-content').innerHTML = `
       <div class="stat-card"><h3>영상 제목</h3><div class="value" style="font-size:16px">${data.title||''}</div></div>
       <div class="stat-card"><h3>기술명</h3><div class="value" style="font-size:18px">${data.tech_name||''}</div></div>
       <div class="stat-card"><h3>출력 경로</h3><div class="value" style="font-size:12px;word-break:break-all">${data.final_path||data.path||''}</div></div>
-      ${usageHtml}
-    `;
+      ${usageHtml}`;
     switchTab('result');
 
   } else if (data.type === 'mcp_result') {
-    // 외부 MCP 도구 결과 — JSON이면 파싱, 아니면 마크다운으로 렌더
-    let content = data.content || '';
-    _rawMarkdown = content;
-    try {
-      const parsed = JSON.parse(content);
-      content = '```json\n' + JSON.stringify(parsed, null, 2) + '\n```';
-    } catch {}
-    document.getElementById('result-content').innerHTML =
-      `<div class="markdown-body">${marked.parse(content)}</div>`;
+    _rawMarkdown = data.content||'';
+    let content = _rawMarkdown;
+    try { content = '```json\n'+JSON.stringify(JSON.parse(content),null,2)+'\n```'; } catch {}
+    document.getElementById('result-content').innerHTML = `<div class="markdown-body">${marked.parse(content)}</div>`;
     addCodeCopyButtons();
-    document.getElementById('stats-content').innerHTML =
-      `<div class="stat-card"><h3>서버</h3><div class="value" style="font-size:14px">${data.server}</div></div>
-       <div class="stat-card"><h3>도구</h3><div class="value" style="font-size:14px">${data.tool}</div></div>`;
+    document.getElementById('stats-content').innerHTML = `<div class="stat-card"><h3>서버</h3><div class="value" style="font-size:14px">${data.server}</div></div><div class="stat-card"><h3>도구</h3><div class="value" style="font-size:14px">${data.tool}</div></div>`;
     switchTab('result');
 
   } else if (data.type === 'history') {
-    const items = data.items || [];
+    const items = data.items||[];
     document.getElementById('stats-content').innerHTML = items.length
-      ? items.slice().reverse().map(h => `
-          <div class="history-item">
-            <h4>${h.title}</h4>
-            <div class="meta">
-              <span>📅 ${h.created_at?.slice(0,10)}</span>
-              <span class="badge badge-blue">${h.model}</span>
-              ${h.usage ? `<span class="badge badge-green">${h.usage.total_tokens?.toLocaleString()} 토큰</span>` : ''}
-              ${h.notion_url ? `<a href="${h.notion_url}" target="_blank" style="color:var(--accent)">Notion ↗</a>` : ''}
-            </div>
-          </div>`).join('')
+      ? items.slice().reverse().map(h=>`<div class="history-item"><h4>${h.title}</h4><div class="meta"><span>📅 ${h.created_at?.slice(0,10)}</span><span class="badge badge-blue">${h.model}</span>${h.usage?`<span class="badge badge-green">${h.usage.total_tokens?.toLocaleString()} 토큰</span>`:''}</div></div>`).join('')
       : '<div class="placeholder"><div class="icon">📋</div><p>이력이 없습니다.</p></div>';
-    document.getElementById('result-content').innerHTML =
-      '<div class="placeholder"><div class="icon">📋</div><p>왼쪽 데이터 탭을 확인하세요.</p></div>';
+    document.getElementById('result-content').innerHTML = '<div class="placeholder"><div class="icon">📋</div><p>데이터 탭을 확인하세요.</p></div>';
     switchTab('stats');
 
   } else if (data.type === 'usage_stats') {
-    const models = Object.entries(data.model_stats || {});
-    const modelRows = models.map(([m, s]) =>
-      `<tr><td>${m}</td><td>${s.count}</td><td>${s.tokens.toLocaleString()}</td><td>${s.cost > 0 ? '$'+s.cost.toFixed(4) : '무료'}</td></tr>`
-    ).join('');
+    const modelRows = Object.entries(data.model_stats||{}).map(([m,s])=>`<tr><td>${m}</td><td>${s.count}</td><td>${s.tokens.toLocaleString()}</td><td>${s.cost>0?'$'+s.cost.toFixed(4):'무료'}</td></tr>`).join('');
     document.getElementById('stats-content').innerHTML = `
       <div class="stat-grid">
         <div class="stat-card"><h3>처리 영상</h3><div class="value">${data.entries}</div></div>
         <div class="stat-card"><h3>총 토큰</h3><div class="value">${data.total_tokens?.toLocaleString()}</div></div>
-        <div class="stat-card"><h3>예상 비용</h3><div class="value" style="font-size:20px">${data.total_cost > 0 ? '$'+data.total_cost.toFixed(4) : '$0.00'}</div></div>
+        <div class="stat-card"><h3>예상 비용</h3><div class="value" style="font-size:20px">${data.total_cost>0?'$'+data.total_cost.toFixed(4):'$0.00'}</div></div>
       </div>
-      <div class="stat-card">
-        <h3>모델별 사용량</h3>
-        <table class="usage-table">
-          <thead><tr><th>모델</th><th>처리 수</th><th>토큰</th><th>비용</th></tr></thead>
-          <tbody>${modelRows || '<tr><td colspan="4" style="color:var(--muted)">데이터 없음</td></tr>'}</tbody>
-        </table>
-      </div>`;
+      <div class="stat-card"><h3>모델별 사용량</h3><table class="usage-table"><thead><tr><th>모델</th><th>처리 수</th><th>토큰</th><th>비용</th></tr></thead><tbody>${modelRows||'<tr><td colspan="4" style="color:var(--muted)">데이터 없음</td></tr>'}</tbody></table></div>`;
     switchTab('stats');
 
   } else if (data.type === 'outputs') {
-    const items = data.items || [];
-    document.getElementById('stats-content').innerHTML = items.map(item => `
-      <div class="history-item">
-        <h4>${item.name}</h4>
-        <div class="meta">${item.files.map(f=>`<span class="badge badge-blue">${f}</span>`).join('')}</div>
-      </div>`).join('')
-      || '<div class="placeholder"><div class="icon">📁</div><p>생성된 파일이 없습니다.</p></div>';
+    const items = data.items||[];
+    document.getElementById('stats-content').innerHTML = items.map(item=>
+      `<div class="history-item"><h4>${item.name}</h4><div class="meta">${item.files.map(f=>`<span class="badge badge-blue">${f}</span>`).join('')}</div></div>`
+    ).join('') || '<div class="placeholder"><div class="icon">📁</div><p>생성된 파일이 없습니다.</p></div>';
     switchTab('stats');
 
   } else if (data.type === 'notion') {
-    document.getElementById('result-content').innerHTML = `
-      <div style="padding:40px;text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">✅</div>
-        <div style="font-size:16px;margin-bottom:12px;color:var(--green)">Notion 업로드 완료!</div>
-        <a href="${data.url}" target="_blank" style="color:var(--accent);font-size:14px">${data.url}</a>
-      </div>`;
+    document.getElementById('result-content').innerHTML = `<div style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:16px">✅</div><div style="font-size:16px;margin-bottom:12px;color:var(--green)">Notion 업로드 완료!</div><a href="${data.url}" target="_blank" style="color:var(--accent)">${data.url}</a></div>`;
     switchTab('result');
   }
 }
 
-// ── 탭 전환 ────────────────────────────────────────────────────────
+// ── 탭 전환 ─────────────────────────────────────────────────────────
 function switchTab(name) {
   _currentTab = name;
-  document.querySelectorAll('.tab').forEach((el,i) => {
-    const names = ['log','result','stats'];
-    el.classList.toggle('active', names[i] === name);
-  });
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['log','result','stats'][i]===name));
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.getElementById(`tab-${name}`).classList.add('active');
 }
 
 // ── 복사 ─────────────────────────────────────────────────────────────
 function copyText(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
+  navigator.clipboard.writeText(text).then(()=>{
     const orig = btn.textContent;
-    btn.textContent = '✓ 복사됨';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+    btn.textContent='✓ 복사됨'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent=orig;btn.classList.remove('copied');},1500);
   });
 }
 function copyCurrentTab() {
   const btn = document.getElementById('btn-copy-tab');
-  if (_currentTab === 'result' && _rawMarkdown) copyText(_rawMarkdown, btn);
-  else if (_currentTab === 'log') {
-    const lines = [...document.getElementById('log-content').querySelectorAll('div')].map(d=>d.textContent).join('\n');
+  if (_currentTab==='result' && _rawMarkdown) copyText(_rawMarkdown, btn);
+  else if (_currentTab==='log') {
+    const lines=[...document.getElementById('log-content').querySelectorAll('div')].map(d=>d.textContent).join('\n');
     if (lines) copyText(lines, btn);
-  } else if (_currentTab === 'stats') {
-    const text = document.getElementById('stats-content').innerText;
-    if (text) copyText(text, btn);
+  } else if (_currentTab==='stats') {
+    const t=document.getElementById('stats-content').innerText; if(t) copyText(t,btn);
   }
 }
 function addCodeCopyButtons() {
-  document.querySelectorAll('#result-content pre').forEach(pre => {
+  document.querySelectorAll('#result-content pre').forEach(pre=>{
     if (pre.parentElement.classList.contains('code-block-wrap')) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'code-block-wrap';
-    pre.parentNode.insertBefore(wrap, pre);
-    wrap.appendChild(pre);
-    const btn = document.createElement('button');
-    btn.className = 'btn-copy-code';
-    btn.textContent = '복사';
-    btn.onclick = () => copyText(pre.querySelector('code')?.innerText || pre.innerText, btn);
+    const wrap=document.createElement('div'); wrap.className='code-block-wrap';
+    pre.parentNode.insertBefore(wrap,pre); wrap.appendChild(pre);
+    const btn=document.createElement('button'); btn.className='btn-copy-code'; btn.textContent='복사';
+    btn.onclick=()=>copyText(pre.querySelector('code')?.innerText||pre.innerText,btn);
     wrap.appendChild(btn);
   });
 }
 
-// ── 상태 표시 ────────────────────────────────────────────────────────
+// ── 상태 ─────────────────────────────────────────────────────────────
 function setStatus(state, text) {
-  document.getElementById('status-dot').className = `status-dot ${state === 'running' ? 'running' : ''}`;
-  document.getElementById('status-text').textContent = text;
+  document.getElementById('status-dot').className=`status-dot ${state==='running'?'running':''}`;
+  document.getElementById('status-text').textContent=text;
 }
 
-// ── MCP 서버 추가/삭제 ────────────────────────────────────────────────
-function openAddModal() {
-  document.getElementById('mcp-name').value = '';
-  document.getElementById('mcp-label').value = '';
-  document.getElementById('mcp-command').value = '';
-  document.getElementById('mcp-args').value = '';
-  document.getElementById('mcp-cwd').value = '';
-  document.getElementById('mcp-env').value = '';
-  document.getElementById('add-modal').classList.add('open');
-}
-function closeAddModal() {
-  document.getElementById('add-modal').classList.remove('open');
-}
-async function saveMcpServer() {
-  const name    = document.getElementById('mcp-name').value.trim();
-  const label   = document.getElementById('mcp-label').value.trim();
-  const command = document.getElementById('mcp-command').value.trim();
-  const argsRaw = document.getElementById('mcp-args').value.trim();
-  const cwd     = document.getElementById('mcp-cwd').value.trim();
-  const envRaw  = document.getElementById('mcp-env').value.trim();
-
-  if (!name || !label || !command) { alert('서버 ID, 이름, 명령어는 필수입니다.'); return; }
-
-  let env = {};
-  if (envRaw) {
-    try { env = JSON.parse(envRaw); }
-    catch { alert('환경변수 JSON 형식이 올바르지 않습니다.'); return; }
-  }
-
-  const args = argsRaw ? argsRaw.split(/\s+/) : [];
-  const res = await fetch('/api/mcp/servers', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ name, label, command, args, cwd, env }),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    alert(err.detail || '추가 실패');
+// ── 외부 MCP 서버 ────────────────────────────────────────────────────
+async function loadMcpServers() {
+  const servers = await fetch('/api/mcp/servers').then(r=>r.json());
+  const c = document.getElementById('mcp-server-list');
+  if (!servers.length) {
+    c.innerHTML='<div style="padding:5px 14px;font-size:11px;color:var(--muted)">서버 없음</div>';
     return;
   }
-  closeAddModal();
-  await loadMcpServers();
-}
-async function deleteMcpServer(name) {
-  if (!confirm(`'${name}' 서버를 삭제할까요?`)) return;
-  await fetch(`/api/mcp/servers/${name}`, { method: 'DELETE' });
-  await loadMcpServers();
+  c.innerHTML='';
+  for (const srv of servers) {
+    const grp = document.createElement('div');
+    grp.innerHTML=`<div class="mcp-server-label"><span>🔌 ${srv.label}</span><button class="btn-del" onclick="deleteMcpServer('${srv.name}')">✕</button></div>`;
+    const toolsEl = document.createElement('div');
+    toolsEl.innerHTML='<div style="padding:3px 22px;font-size:11px;color:var(--muted)">로딩 중...</div>';
+    grp.appendChild(toolsEl); c.appendChild(grp);
+
+    fetch(`/api/mcp/servers/${srv.name}/tools`).then(r=>r.json()).then(ts=>{
+      if (ts.detail) { toolsEl.innerHTML=`<div style="padding:3px 22px;font-size:11px;color:var(--red)">${ts.detail}</div>`; return; }
+      toolsEl.innerHTML = ts.map(t=>`<div class="tool-item mcp" onclick="selectMcpTool('${srv.name}','${t.name}',${JSON.stringify(JSON.stringify(t)).slice(1,-1)})"><span class="tool-icon">⚙</span><span>${t.name}</span></div>`).join('')||'<div style="padding:3px 22px;font-size:11px;color:var(--muted)">도구 없음</div>';
+    }).catch(()=>{ toolsEl.innerHTML='<div style="padding:3px 22px;font-size:11px;color:var(--red)">연결 실패</div>'; });
+  }
 }
 
-// 모달 바깥 클릭 닫기
-document.getElementById('add-modal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeAddModal();
-});
+function openAddModal() {
+  ['mcp-name','mcp-label','mcp-command','mcp-args','mcp-cwd','mcp-env'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-modal').classList.add('open');
+}
+function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+
+async function saveMcpServer() {
+  const name=document.getElementById('mcp-name').value.trim();
+  const label=document.getElementById('mcp-label').value.trim();
+  const command=document.getElementById('mcp-command').value.trim();
+  const argsRaw=document.getElementById('mcp-args').value.trim();
+  const cwd=document.getElementById('mcp-cwd').value.trim();
+  const envRaw=document.getElementById('mcp-env').value.trim();
+  if (!name||!label||!command){alert('서버 ID, 이름, 명령어는 필수입니다.');return;}
+  let env={};
+  if (envRaw){try{env=JSON.parse(envRaw);}catch{alert('환경변수 JSON 오류');return;}}
+  const res=await fetch('/api/mcp/servers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,label,command,args:argsRaw?argsRaw.split(/\s+/):[],cwd,env})});
+  if (!res.ok){alert((await res.json()).detail||'추가 실패');return;}
+  closeAddModal(); await loadMcpServers();
+}
+async function deleteMcpServer(name) {
+  if (!confirm(`'${name}' 삭제할까요?`)) return;
+  await fetch(`/api/mcp/servers/${name}`,{method:'DELETE'});
+  await loadMcpServers();
+}
+document.getElementById('add-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAddModal();});
 
 init();
 </script>

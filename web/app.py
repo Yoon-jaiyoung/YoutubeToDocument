@@ -16,9 +16,10 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
@@ -53,72 +54,27 @@ class _SmartWriter:
 sys.stdout = _SmartWriter()
 
 
-# ── 툴 정의 ────────────────────────────────────────────────────────
-TOOLS = [
-    {
-        "name": "process_youtube",
-        "label": "YouTube 영상 처리",
-        "icon": "▶",
-        "description": "YouTube URL을 입력하면 자막/STT 추출 → AI 초안 생성 → AI 검증 → 최종 매뉴얼을 자동 생성합니다.",
-        "fields": [
-            {"key": "url",      "label": "YouTube URL",    "type": "text",   "required": True,  "placeholder": "https://youtube.com/watch?v=..."},
-            {"key": "model",    "label": "생성 AI 모델",    "type": "select", "required": False, "options": ["local","claude","gpt","gemini"], "default": "local"},
-            {"key": "reviewer", "label": "검증 AI 모델",    "type": "select", "required": False, "options": ["local","claude","gpt","gemini"], "default": "local"},
-        ],
-    },
-    {
-        "name": "apply_feedback",
-        "label": "피드백 반영",
-        "icon": "✏",
-        "description": "기존 매뉴얼에 피드백을 반영하여 재수정합니다.",
-        "fields": [
-            {"key": "output_dir", "label": "output 폴더",  "type": "output_select", "required": True},
-            {"key": "feedback",   "label": "피드백 내용",   "type": "textarea", "required": True, "placeholder": "수정할 내용을 입력하세요"},
-            {"key": "model",      "label": "AI 모델",       "type": "select",   "required": False, "options": ["local","claude","gpt","gemini"], "default": "local"},
-        ],
-    },
-    {
-        "name": "upload_to_notion",
-        "label": "Notion 업로드",
-        "icon": "📤",
-        "description": "생성된 매뉴얼을 Notion 페이지에 업로드합니다. NOTION_API_KEY, NOTION_PAGE_ID 환경변수 필요.",
-        "fields": [
-            {"key": "output_dir", "label": "output 폴더", "type": "output_select", "required": True},
-        ],
-    },
-    {
-        "name": "get_history",
-        "label": "이력 조회",
-        "icon": "📋",
-        "description": "처리된 YouTube 영상 이력을 조회합니다.",
-        "fields": [],
-    },
-    {
-        "name": "get_usage_stats",
-        "label": "AI 사용량 통계",
-        "icon": "📊",
-        "description": "AI 모델 누적 사용량 및 비용 통계를 조회합니다.",
-        "fields": [],
-    },
-    {
-        "name": "read_manual",
-        "label": "매뉴얼 보기",
-        "icon": "📄",
-        "description": "생성된 매뉴얼 파일을 읽어 표시합니다.",
-        "fields": [
-            {"key": "output_dir", "label": "output 폴더", "type": "output_select", "required": True},
-            {"key": "file",       "label": "파일 종류",    "type": "select",        "required": False,
-             "options": ["final","draft","review"], "default": "final"},
-        ],
-    },
-    {
-        "name": "list_outputs",
-        "label": "생성 목록",
-        "icon": "📁",
-        "description": "지금까지 생성된 모든 매뉴얼 목록을 표시합니다.",
-        "fields": [],
-    },
-]
+# ── 툴 정의 (tools_config.json 에서 로드) ──────────────────────────
+_TOOLS_CONFIG_PATH = Path(__file__).parent.parent / "tools_config.json"
+
+def _load_tools() -> list:
+    with open(_TOOLS_CONFIG_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+TOOLS = _load_tools()
+
+# ── MCP 서버 설정 파일 ──────────────────────────────────────────────
+MCP_SERVERS_FILE = "mcp_servers.json"
+
+def _load_mcp_servers() -> list:
+    if not os.path.exists(MCP_SERVERS_FILE):
+        return []
+    with open(MCP_SERVERS_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+def _save_mcp_servers(servers: list):
+    with open(MCP_SERVERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(servers, f, ensure_ascii=False, indent=2)
 
 # ── 실행 중인 태스크 ────────────────────────────────────────────────
 _tasks: dict[str, asyncio.Queue] = {}
@@ -130,9 +86,153 @@ async def index():
     return FileResponse(str(static_dir / "index.html"))
 
 
+@app.get("/api/status")
+async def get_status():
+    """로컬 LLM 및 API 키 설정 현황 반환"""
+    local_ok = False
+    local_model = None
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            r = await client.get("http://localhost:8080/v1/models")
+            if r.status_code == 200:
+                data = r.json()
+                models = data.get("data", [])
+                local_ok = True
+                local_model = models[0]["id"] if models else "local"
+    except Exception:
+        pass
+
+    return {
+        "local": {"ok": local_ok, "model": local_model},
+        "models": {
+            "local":  local_ok,
+            "claude": bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "gpt":    bool(os.environ.get("OPENAI_API_KEY")),
+            "gemini": bool(os.environ.get("GOOGLE_API_KEY")),
+        },
+    }
+
+
 @app.get("/api/tools")
 async def list_tools():
-    return TOOLS
+    return _load_tools()
+
+
+# ── MCP 서버 관리 ────────────────────────────────────────────────────
+class MCPServerConfig(BaseModel):
+    name: str
+    label: str
+    command: str
+    args: list = []
+    cwd: str = ""
+    env: dict = {}
+
+
+@app.get("/api/mcp/servers")
+async def list_mcp_servers():
+    return _load_mcp_servers()
+
+
+@app.post("/api/mcp/servers")
+async def add_mcp_server(config: MCPServerConfig):
+    servers = _load_mcp_servers()
+    if any(s["name"] == config.name for s in servers):
+        raise HTTPException(400, "이미 존재하는 서버 이름입니다.")
+    servers.append(config.model_dump())
+    _save_mcp_servers(servers)
+    return {"ok": True}
+
+
+@app.delete("/api/mcp/servers/{name}")
+async def delete_mcp_server(name: str):
+    servers = [s for s in _load_mcp_servers() if s["name"] != name]
+    _save_mcp_servers(servers)
+    return {"ok": True}
+
+
+@app.get("/api/mcp/servers/{name}/tools")
+async def get_mcp_server_tools(name: str):
+    servers = _load_mcp_servers()
+    server = next((s for s in servers if s["name"] == name), None)
+    if not server:
+        raise HTTPException(404, "서버를 찾을 수 없습니다.")
+    try:
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+
+        env = {**os.environ, **(server.get("env") or {})} or None
+        params = StdioServerParameters(
+            command=server["command"],
+            args=server.get("args", []),
+            env=env,
+        )
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.list_tools()
+                return [
+                    {
+                        "name": t.name,
+                        "description": t.description or "",
+                        "inputSchema": t.inputSchema,
+                        "server": name,
+                        "server_label": server.get("label", name),
+                    }
+                    for t in result.tools
+                ]
+    except Exception as e:
+        raise HTTPException(500, f"MCP 서버 연결 실패: {e}")
+
+
+@app.post("/api/mcp/execute/{server_name}/{tool_name}")
+async def execute_mcp_tool(server_name: str, tool_name: str, body: ExecuteRequest):
+    task_id = str(uuid.uuid4())
+    q: asyncio.Queue = asyncio.Queue()
+    _tasks[task_id] = q
+
+    async def worker():
+        try:
+            servers = _load_mcp_servers()
+            server = next((s for s in servers if s["name"] == server_name), None)
+            if not server:
+                await q.put({"type": "error", "message": f"서버 '{server_name}'을 찾을 수 없습니다."})
+                return
+
+            from mcp import ClientSession, StdioServerParameters
+            from mcp.client.stdio import stdio_client
+
+            env = {**os.environ, **(server.get("env") or {})} or None
+            params = StdioServerParameters(
+                command=server["command"],
+                args=server.get("args", []),
+                env=env,
+            )
+            await q.put({"type": "log", "text": f"MCP 서버 '{server['label']}' 연결 중..."})
+
+            async with stdio_client(params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    await q.put({"type": "log", "text": f"도구 '{tool_name}' 실행 중..."})
+                    result = await session.call_tool(tool_name, body.args)
+                    text_result = "\n".join(
+                        block.text for block in result.content if hasattr(block, "text")
+                    )
+                    await q.put({
+                        "type": "result",
+                        "data": {
+                            "type": "mcp_result",
+                            "content": text_result,
+                            "server": server_name,
+                            "tool": tool_name,
+                        },
+                    })
+        except Exception as e:
+            await q.put({"type": "error", "message": str(e)})
+        finally:
+            await q.put({"type": "done"})
+
+    asyncio.create_task(worker())
+    return {"task_id": task_id}
 
 
 @app.get("/api/outputs")
@@ -153,6 +253,11 @@ class ExecuteRequest(BaseModel):
 
 @app.post("/api/execute/{tool_name}")
 async def execute_tool(tool_name: str, body: ExecuteRequest):
+    # coming_soon 도구 실행 차단
+    tools = _load_tools()
+    tool_def = next((t for t in tools if t["name"] == tool_name), None)
+    if tool_def and tool_def.get("status") == "coming_soon":
+        raise HTTPException(400, "아직 개발 중인 도구입니다.")
     task_id = str(uuid.uuid4())
     loop = asyncio.get_event_loop()
     q: asyncio.Queue = asyncio.Queue()

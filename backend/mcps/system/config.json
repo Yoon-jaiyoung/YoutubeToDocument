@@ -1,0 +1,42 @@
+{
+  "group": "시스템",
+  "group_icon": "⚙️",
+  "order": 3,
+  "tools": [
+    {
+      "name": "get_history",
+      "label": "이력 조회",
+      "icon": "📋",
+      "status": "active",
+      "description": "처리된 YouTube 영상 이력을 조회합니다.",
+      "fields": []
+    },
+    {
+      "name": "get_usage_stats",
+      "label": "AI 사용량 통계",
+      "icon": "📊",
+      "status": "active",
+      "description": "AI 모델 누적 사용량 및 비용 통계를 조회합니다.",
+      "fields": []
+    },
+    {
+      "name": "read_manual",
+      "label": "매뉴얼 보기",
+      "icon": "📄",
+      "status": "active",
+      "description": "생성된 매뉴얼 파일을 읽어 표시합니다.",
+      "fields": [
+        {"key": "output_dir", "label": "output 폴더", "type": "output_select", "required": true},
+        {"key": "file",       "label": "파일 종류",    "type": "select",        "required": false, "options": ["final","draft","review"], "default": "final"}
+      ]
+    },
+    {
+      "name": "list_outputs",
+      "label": "생성 목록",
+      "icon": "📁",
+      "status": "active",
+      "description": "지금까지 생성된 모든 매뉴얼 목록을 표시합니다.",
+      "fields": []
+    }
+  ]
+}

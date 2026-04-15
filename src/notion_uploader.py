@@ -294,16 +294,22 @@ def upload_to_notion(
 
     client = Client(auth=api_key)
 
-    # 상단 callout: 원본 영상 링크
+    # 상단 callout: 원본 영상 링크 (URL이 있을 때만 링크 추가)
+    if youtube_url:
+        callout_rich = [
+            {"type": "text", "text": {"content": "원본 YouTube 영상: "}},
+            {"type": "text", "text": {"content": youtube_url,
+                                      "link": {"url": youtube_url}}},
+        ]
+    else:
+        callout_rich = [
+            {"type": "text", "text": {"content": "YoutubeToDocument로 생성된 매뉴얼"}},
+        ]
     callout = {
         "object": "block",
         "type": "callout",
         "callout": {
-            "rich_text": [
-                {"type": "text", "text": {"content": "원본 YouTube 영상: "}},
-                {"type": "text", "text": {"content": youtube_url,
-                                          "link": {"url": youtube_url}}},
-            ],
+            "rich_text": callout_rich,
             "icon": {"type": "emoji", "emoji": "📺"},
             "color": "blue_background",
         },

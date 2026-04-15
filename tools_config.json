@@ -1,0 +1,96 @@
+[
+  {
+    "name": "process_youtube",
+    "label": "YouTube 영상 처리",
+    "icon": "▶",
+    "status": "active",
+    "description": "YouTube URL을 입력하면 자막/STT 추출 → AI 초안 생성 → AI 검증 → 최종 매뉴얼을 자동 생성합니다.",
+    "fields": [
+      {"key": "url",      "label": "YouTube URL",   "type": "text",   "required": true,  "placeholder": "https://youtube.com/watch?v=..."},
+      {"key": "model",    "label": "생성 AI 모델",   "type": "select", "required": false, "options": ["local","claude","gpt","gemini"], "default": "local"},
+      {"key": "reviewer", "label": "검증 AI 모델",   "type": "select", "required": false, "options": ["local","claude","gpt","gemini"], "default": "local"}
+    ]
+  },
+  {
+    "name": "apply_feedback",
+    "label": "피드백 반영",
+    "icon": "✏",
+    "status": "active",
+    "description": "기존 매뉴얼에 피드백을 반영하여 재수정합니다.",
+    "fields": [
+      {"key": "output_dir", "label": "output 폴더",  "type": "output_select", "required": true},
+      {"key": "feedback",   "label": "피드백 내용",   "type": "textarea",      "required": true,  "placeholder": "수정할 내용을 입력하세요"},
+      {"key": "model",      "label": "AI 모델",       "type": "select",        "required": false, "options": ["local","claude","gpt","gemini"], "default": "local"}
+    ]
+  },
+  {
+    "name": "upload_to_notion",
+    "label": "Notion 업로드",
+    "icon": "📤",
+    "status": "active",
+    "description": "생성된 매뉴얼을 Notion 페이지에 업로드합니다. NOTION_API_KEY, NOTION_PAGE_ID 환경변수 필요.",
+    "fields": [
+      {"key": "output_dir", "label": "output 폴더", "type": "output_select", "required": true}
+    ]
+  },
+  {
+    "name": "get_history",
+    "label": "이력 조회",
+    "icon": "📋",
+    "status": "active",
+    "description": "처리된 YouTube 영상 이력을 조회합니다.",
+    "fields": []
+  },
+  {
+    "name": "get_usage_stats",
+    "label": "AI 사용량 통계",
+    "icon": "📊",
+    "status": "active",
+    "description": "AI 모델 누적 사용량 및 비용 통계를 조회합니다.",
+    "fields": []
+  },
+  {
+    "name": "read_manual",
+    "label": "매뉴얼 보기",
+    "icon": "📄",
+    "status": "active",
+    "description": "생성된 매뉴얼 파일을 읽어 표시합니다.",
+    "fields": [
+      {"key": "output_dir", "label": "output 폴더", "type": "output_select", "required": true},
+      {"key": "file",       "label": "파일 종류",    "type": "select",        "required": false, "options": ["final","draft","review"], "default": "final"}
+    ]
+  },
+  {
+    "name": "list_outputs",
+    "label": "생성 목록",
+    "icon": "📁",
+    "status": "active",
+    "description": "지금까지 생성된 모든 매뉴얼 목록을 표시합니다.",
+    "fields": []
+  },
+
+  {
+    "name": "__placeholder_1",
+    "label": "새 도구 슬롯",
+    "icon": "🔧",
+    "status": "coming_soon",
+    "description": "tools_config.json 에 새 항목을 추가하고 web/app.py 의 _run_tool() 에 실행 로직을 구현하면 자동으로 활성화됩니다.",
+    "fields": []
+  },
+  {
+    "name": "__placeholder_2",
+    "label": "새 도구 슬롯",
+    "icon": "🔧",
+    "status": "coming_soon",
+    "description": "tools_config.json 에 새 항목을 추가하고 web/app.py 의 _run_tool() 에 실행 로직을 구현하면 자동으로 활성화됩니다.",
+    "fields": []
+  },
+  {
+    "name": "__placeholder_3",
+    "label": "새 도구 슬롯",
+    "icon": "🔧",
+    "status": "coming_soon",
+    "description": "tools_config.json 에 새 항목을 추가하고 web/app.py 의 _run_tool() 에 실행 로직을 구현하면 자동으로 활성화됩니다.",
+    "fields": []
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "group": "YouTube",
+  "group_icon": "🎬",
+  "order": 1,
+  "tools": [
+    {
+      "name": "process_youtube",
+      "label": "영상 처리",
+      "icon": "▶",
+      "status": "active",
+      "description": "YouTube URL → 자막/STT 추출 → AI 초안 → AI 검증 → 최종 매뉴얼 자동 생성",
+      "fields": [
+        {"key": "url",      "label": "YouTube URL",  "type": "text",   "required": true,  "placeholder": "https://youtube.com/watch?v=..."},
+        {"key": "model",    "label": "생성 AI 모델",  "type": "select", "required": false, "options": ["local","claude","gpt","gemini"], "default": "local"},
+        {"key": "reviewer", "label": "검증 AI 모델",  "type": "select", "required": false, "options": ["local","claude","gpt","gemini"], "default": "local"}
+      ]
+    },
+    {
+      "name": "apply_feedback",
+      "label": "피드백 반영",
+      "icon": "✏",
+      "status": "active",
+      "description": "기존 매뉴얼에 피드백을 반영하여 재수정합니다.",
+      "fields": [
+        {"key": "output_dir", "label": "output 폴더",  "type": "output_select", "required": true},
+        {"key": "feedback",   "label": "피드백 내용",   "type": "textarea",      "required": true, "placeholder": "수정할 내용을 입력하세요"},
+        {"key": "model",      "label": "AI 모델",       "type": "select",        "required": false, "options": ["local","claude","gpt","gemini"], "default": "local"}
+      ]
+    }
+  ]
+}

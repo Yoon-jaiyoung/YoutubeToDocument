@@ -141,26 +141,99 @@ python main.py --history
 
 ---
 
-## 디렉토리 구조 (예정)
+## 디렉토리 구조 (현재)
 ```
 YoutubeToDocument/
-├── main.py
+├── main.py                        # CLI 진입점
+├── mcp_server.py                  # Claude Desktop용 MCP 서버 (stdio)
+├── run.sh                         # 서버 시작 스크립트 (.env 로드 포함)
+├── 서버시작.command                # macOS 더블클릭 실행 파일
 ├── requirements.txt
-├── history.json              # URL 분석 이력
-├── research.md
+├── .env.example                   # API 키 설정 예시
+├── mcp_servers.json               # 외부 MCP 서버 설정 (자동 생성)
+├── history.json                   # URL 분석 이력 (자동 생성)
 ├── plan.md
-├── src/
-│   ├── extractor.py          # 자막/오디오 추출
-│   ├── preprocessor.py       # STT 전처리 (노이즈 제거, 흐름 정리) ← 검증 반영 추가
-│   ├── transcriber.py        # STT 처리
-│   ├── generator.py          # AI 매뉴얼 생성 (의도 식별 + 초안)
-│   ├── reviewer.py           # AI 검증 및 수정 가이드
-│   ├── refiner.py            # 수정 가이드 반영 최종본 생성
-│   ├── history.py            # 이력 관리
-│   └── writer.py             # MD 파일 저장
-└── output/
+├── research.md
+│
+├── frontend/                      # 프론트엔드
+│   └── index.html                 # 단일 페이지 앱 (그룹 사이드바, SSE, 마크다운 뷰어)
+│
+├── backend/                       # 백엔드
+│   ├── app.py                     # FastAPI 진입점 — mcps/ 폴더 자동 탐색
+│   ├── core/
+│   │   ├── status.py              # 로컬 LLM·API 키 상태 확인
+│   │   └── mcp_manager.py         # 외부 MCP 서버 연결·관리
+│   └── mcps/                      # MCP 단위 폴더 (그룹별 분리)
+│       ├── youtube/               # 🎬 YouTube 그룹
+│       │   ├── config.json        # 도구 정의 (label, icon, fields)
+│       │   └── handler.py         # def run(tool_name, args) → dict
+│       ├── notion/                # 📝 Notion 그룹
+│       │   ├── config.json
+│       │   └── handler.py
+│       └── system/                # ⚙️ 시스템 그룹
+│           ├── config.json
+│           └── handler.py
+│
+├── src/                           # 핵심 처리 로직 (backend에서 import)
+│   ├── extractor.py               # 자막/오디오 추출
+│   ├── preprocessor.py            # STT 전처리
+│   ├── transcriber.py             # STT (faster-whisper)
+│   ├── llm_client.py              # LLM 통합 클라이언트 (local/claude/gpt/gemini)
+│   ├── generator.py               # AI 초안 생성
+│   ├── reviewer.py                # AI 검증
+│   ├── refiner.py                 # 최종본 생성 + 빠른 따라하기 표 추가
+│   ├── history.py                 # 이력 관리
+│   ├── writer.py                  # MD 파일 저장
+│   ├── usage_tracker.py           # AI 토큰 사용량 추적
+│   └── notion_uploader.py         # Notion 업로드
+│
+└── output/                        # 생성된 매뉴얼 (자동 생성)
     └── {영상제목}/
-        ├── draft.md          # AI 생성 초안
-        ├── review.md         # 검증 AI 수정 가이드
-        └── final.md          # 최종 매뉴얼
+        ├── draft.md               # AI 생성 초안
+        ├── review.md              # AI 검증 가이드
+        ├── final.md               # 최종 매뉴얼 (빠른 따라하기 표 포함)
+        └── usage_report.json      # AI 토큰 사용량 리포트
+```
+
+---
+
+## 새 MCP 그룹 추가 방법
+
+나중에 새 기능을 추가할 때는 아래 폴더 하나만 만들면 됩니다:
+
+```
+backend/mcps/{새_기능명}/
+├── config.json    # 그룹명·아이콘·도구 정의
+└── handler.py     # def run(tool_name: str, args: dict) -> dict
+```
+
+서버 재시작 시 `backend/app.py`가 자동으로 폴더를 탐색해 사이드바에 추가합니다.
+
+### config.json 예시
+```json
+{
+  "group": "내 새 기능",
+  "group_icon": "🛠",
+  "order": 4,
+  "tools": [
+    {
+      "name": "my_tool",
+      "label": "도구 이름",
+      "icon": "⚡",
+      "status": "active",
+      "description": "도구 설명",
+      "fields": [
+        {"key": "input", "label": "입력", "type": "text", "required": true}
+      ]
+    }
+  ]
+}
+```
+
+### handler.py 예시
+```python
+def run(tool_name: str, args: dict) -> dict:
+    if tool_name == "my_tool":
+        return {"type": "manual", "content": f"결과: {args['input']}"}
+    raise ValueError(f"Unknown tool: {tool_name}")
 ```

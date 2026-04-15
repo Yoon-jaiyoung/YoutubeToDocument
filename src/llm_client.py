@@ -1,4 +1,6 @@
 import os
+import re
+import time
 
 
 LOCAL_BASE_URL = "http://localhost:8080/v1"
@@ -41,13 +43,12 @@ class LLMClient:
             self._model_name = "gpt-4o"
 
         elif self.model_type == "gemini":
-            import google.generativeai as genai
+            from google import genai
             api_key = os.environ.get("GOOGLE_API_KEY")
             if not api_key:
                 raise ValueError("GOOGLE_API_KEY 환경변수가 설정되지 않았습니다.")
-            genai.configure(api_key=api_key)
-            self._client = genai.GenerativeModel("gemini-1.5-pro")
-            self._model_name = "gemini-1.5-pro"
+            self._client = genai.Client(api_key=api_key)
+            self._model_name = "gemini-2.0-flash"
 
         else:
             raise ValueError(f"지원하지 않는 모델 타입: {self.model_type}. (local/claude/gpt/gemini)")
@@ -72,9 +73,9 @@ class LLMClient:
             elif model_type == "gemini":
                 m = response.usage_metadata
                 rec = {
-                    "prompt_tokens": m.prompt_token_count,
-                    "completion_tokens": m.candidates_token_count,
-                    "total_tokens": m.total_token_count,
+                    "prompt_tokens": getattr(m, "prompt_token_count", 0) or 0,
+                    "completion_tokens": getattr(m, "candidates_token_count", 0) or 0,
+                    "total_tokens": getattr(m, "total_token_count", 0) or 0,
                 }
             else:  # local, gpt (OpenAI 호환)
                 u = response.usage
@@ -106,10 +107,33 @@ class LLMClient:
             return response.content[0].text
 
         elif self.model_type == "gemini":
+            from google.genai import types as genai_types
             prompt = f"{system}\n\n{user}"
-            response = self._client.generate_content(prompt)
-            self._record_usage(response, "gemini")
-            return response.text
+            for attempt in range(3):
+                try:
+                    response = self._client.models.generate_content(
+                        model=self._model_name,
+                        contents=prompt,
+                        config=genai_types.GenerateContentConfig(
+                            system_instruction=system,
+                            max_output_tokens=4000,
+                            temperature=0.7,
+                        ),
+                    )
+                    self._record_usage(response, "gemini")
+                    return response.text
+                except Exception as e:
+                    msg = str(e)
+                    if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
+                        # retryDelay 파싱 (예: retryDelay: '25s')
+                        m = re.search(r"retryDelay.*?(\d+)s", msg)
+                        wait = int(m.group(1)) + 2 if m else 30
+                        print(f"  ⏳ Gemini 할당량 초과 — {wait}초 후 재시도 ({attempt+1}/3)...")
+                        time.sleep(wait)
+                        if attempt == 2:
+                            raise
+                    else:
+                        raise
 
         elif self.model_type == "gpt":
             response = self._client.chat.completions.create(

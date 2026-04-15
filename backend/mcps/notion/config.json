@@ -1,0 +1,17 @@
+{
+  "group": "Notion",
+  "group_icon": "📝",
+  "order": 2,
+  "tools": [
+    {
+      "name": "upload_to_notion",
+      "label": "Notion 업로드",
+      "icon": "📤",
+      "status": "active",
+      "description": "생성된 매뉴얼을 Notion 페이지에 업로드합니다. NOTION_API_KEY, NOTION_PAGE_ID 환경변수 필요.",
+      "fields": [
+        {"key": "output_dir", "label": "output 폴더", "type": "output_select", "required": true}
+      ]
+    }
+  ]
+}
